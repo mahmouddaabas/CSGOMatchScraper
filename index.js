@@ -1,6 +1,9 @@
-const cheerio = require("cheerio");
-const axios = require("axios");
-const prompt = require('prompt-sync')();
+import cheerio from 'cheerio';
+import axios from 'axios';
+import open from 'open';
+import promptSync from 'prompt-sync'
+const prompt = promptSync();
+
 
 async function scrapeLiveMatches() {
     try {
@@ -30,7 +33,7 @@ async function scrapeLiveMatches() {
             teamNameList.push($(`#body > div > div > div.b23.fl-left > div.content-block.mt20.matches > div:nth-child(${i}) > div.element.match.running.visible > div.match-content > div > div.teams`).find('.team').text().replaceAll('\n', " ").trim())
             var score = $(`#body > div > div > div.b23.fl-left > div.content-block.mt20.matches > div:nth-child(${i}) > div.element.match.running.visible > div.match-content > div > div.additional`).find('.scores').children().text();
             //Handles buggy score when its 1:1 it shows as 1100, this if statement removes last 2 numbers.
-            if(score.length > 2){
+            if (score.length > 2) {
                 score = score.substring(0, score.length - 2)
             }
             scoreList.push(score.substring(0, 1) + "-" + score.substring(1)) //Add a - between the numbers.
@@ -39,8 +42,8 @@ async function scrapeLiveMatches() {
         //console.log(teamNameList)
         //console.log(scoreList)
         //console.log(linkList)
-    
-    
+
+
         for (let i = 0; i < teamNameList.length; i++) {
             list.push({
                 Teams: teamNameList[i],
@@ -62,8 +65,8 @@ async function scrapeLiveMatches() {
 function askUserInput(list) {
     var matchNumber = prompt('Which watch do you want to view? ')
     //Send the link to this function to scrape specific match data.
-    console.log(list[matchNumber].Link)
-    //scrapeSpecificMatchStream(list[matchNumber].Link)
+    //console.log(list[matchNumber].Link)
+    scrapeSpecificMatchStream(list[matchNumber].Link)
 }
 
 async function scrapeSpecificMatchStream(url) {
@@ -78,8 +81,14 @@ async function scrapeSpecificMatchStream(url) {
                 'Cookie': 'PHPSESSID=fissm8gpct8itpkhot48ntce4q; consent_policy=false; enduser_country=SE; enduser_in_page=https%3A%2F%2Ftips.gg%2Fcsgo%2Fmatches%2Flive%2F; enduser_locale=en; enduser_odds_format=decimal; enduser_timezone=Europe%2FStockholm; tgg_test_cookie=TipsGG%20Test%20Cookie'
             }
         };
-        const response = await axios.get(url, config);
+        const response = await axios.get(url + "streams/", config);
         const $ = cheerio.load(response.data);
+        const streamUrl = 'https://www.twitch.tv/' + $('#body > div > div > div:nth-child(3) > div.content-block.match-streams > div.streams-options > a').attr('data-chanel')
+        console.log("Found the following stream, attempting to open it in the default browser...")
+        console.log(streamUrl)
+
+        // opens the url in the default browser 
+        open(streamUrl);
     }
     catch (e) {
         console.log("Could not retrieve data from the URL.");
